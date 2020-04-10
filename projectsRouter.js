@@ -2,7 +2,15 @@ const express = require('express');
 const router = express.Router();
 const Actions = require('./data/helpers/actionModel.js');
 const Projects = require('./data/helpers/projectModel.js');
+ 
 
+router.get('/', (req,res) =>{
+    try{
+        Projects.get().then(response => res.send(response))
+    }catch {
+        res.status(500).json({message: "an error has occurred"})
+    }
+})
 router.get('/:id', validateProjectId, (req,res) => {
     const id = req.params.id;
   try{
@@ -23,6 +31,54 @@ router.get('/:id/actions', validateProjectId, async (req,res)=>{
     }
 })
 
+router.put('/:id',  (req, res) => {
+    try{
+        const id = req.params.id;
+        const project= Projects.update(id, {
+            name: req.body.name,
+            description: req.body.description
+        });
+        res.status(200).json(project)
+    } catch {
+        res.status(500).json({ message: 'an error has occurred'})
+    }
+})
+
+router.post('/', (req, res) =>{
+    try{
+        const project= Projects.insert({
+            name: req.body.name,
+            description: req.body.description
+        })
+        res.status(200).json(project)
+    } catch {
+        res.status(500)({
+            message: "an error has occurred"
+        })
+    }
+})
+ router.post('/:id/actions', validateProjectId, (req, res) =>{
+     try{
+         const action = Actions.insert({
+             project_id: req.params.id,
+             description: req.body.description,
+             notes: req.body.notes
+         });
+         res.status(200).json(action)
+     } catch {
+         res.status(500).json({message: 'an error has occurred'})
+     }
+ })
+
+ router.delete('/:id', validateProjectId, async (req, res) =>{
+     try{
+         const id = req.params.id;
+         const deleteProject =  await Projects.remove(id); 
+         if (deleteProject) res.status(200).json({ message: "project deleted"})
+     } catch{
+         res.status(500).json({ message: 'an error has occurred'})
+     }
+ })
 //mid
 
 async function validateProjectId(req, res, next) {
